@@ -1,0 +1,478 @@
+
+SCM DATABASE DESIGN SQL SCRIPT
+--CREATE Suppliers TABLE
+CREATE TABLE Suppliers(
+	supplier_id INT PRIMARY KEY IDENTITY,
+	supplier_name VARCHAR(30),
+	region VARCHAR(30),
+	phone_number VARCHAR(20),
+	email VARCHAR(20)
+);
+
+SELECT * FROM Suppliers;
+
+--CREATE CUSTOMERS TABLE
+CREATE TABLE Customers(
+	customer_id INT PRIMARY KEY IDENTITY,
+	customer_name VARCHAR(30),
+	phone_number VARCHAR(20),
+	loyalty_status VARCHAR(10) CHECK (loyalty_status IN ('Gold', 'Silver', 'Bronze')), --GOLD FOR HIGH FREQUENT CUSTOMERS, SILVER FOR MID FREQUENT CUSTOMERS, BRONZE FOR OCCASIONAL CUSTS
+	Address VARCHAR(20)
+);
+
+SELECT * FROM Customers;
+
+--CREATE ORDERS TABLE
+CREATE TABLE Orders(
+	order_id INT PRIMARY KEY IDENTITY,
+	product_id INT REFERENCES Products(product_id),
+	supplier_id INT REFERENCES Suppliers(supplier_id) ON DELETE CASCADE,
+	customer_id INT REFERENCES Customers(customer_id),
+	order_date DATETIME DEFAULT GETDATE(),
+	status VARCHAR(10) CHECK (status IN ('Pending', 'Completed', 'Shipped', 'Cancelled'))
+);
+
+SELECT * FROM Orders;
+
+--CREATE ORDERDETAILS TABLE
+CREATE TABLE Orderdetails(
+	orderdetail_id INT PRIMARY KEY IDENTITY,
+	order_id INT REFERENCES Orders(order_id) ON DELETE CASCADE,
+	product_id INT REFERENCES Products(product_id),
+	quantity INT CHECK (quantity > 0)
+);
+
+SELECT * FROM Orderdetails;
+
+--CREATE PRODUCTS TABLE
+CREATE TABLE Products(
+	product_id INT PRIMARY KEY IDENTITY,
+	product_name VARCHAR(30),
+	product_category VARCHAR(30),
+	supplier_id INT REFERENCES Suppliers(supplier_id) ON DELETE CASCADE NOT NULL,
+	unit_price DECIMAL(6,2)
+);
+
+SELECT * FROM Products;
+
+--CREATE TABLE WAREHOUSES
+CREATE TABLE Warehouses(
+	warehouse_id INT PRIMARY KEY IDENTITY,
+	warehouse_name VARCHAR(30),
+	location VARCHAR(30)
+);
+
+SELECT * FROM Warehouses;
+
+
+-- CREATE INVENTORIES TABLE
+CREATE TABLE Inventories(
+	inventory_id INT PRIMARY KEY IDENTITY,
+	product_id INT REFERENCES Products(product_id) ON DELETE CASCADE NOT NULL,
+	warehouse_id INT REFERENCES Warehouses(warehouse_id) ON DELETE CASCADE NOT NULL,
+	quantity_in_stock INT,
+	product_category VARCHAR(30)
+);
+
+SELECT * FROM Inventories;
+
+--CREATE SHIPMENTS TABLE
+CREATE TABLE Shipments(
+	shipment_id INT PRIMARY KEY IDENTITY,
+	supplier_id INT REFERENCES Suppliers(supplier_id)ON DELETE CASCADE,
+	warehouse_id INT REFERENCES Warehouses(warehouse_id) ON DELETE CASCADE,
+	shipment_date DATE,
+	delivery_date DATE,
+	weight FLOAT,
+	status VARCHAR(10) CHECK (status IN('In Transit', 'Received')),
+);
+
+SELECT * FROM Shipments;
+
+--CREATE PRODUCTS MOVEMENT TABLE
+CREATE TABLE Productsmovement(
+	movement_id INT PRIMARY KEY IDENTITY,
+	product_id INT REFERENCES Products(product_id),
+	warehouse_id INT REFERENCES Warehouses(warehouse_id),
+	shipment_id INT REFERENCES Shipments(shipment_id),
+	movement_type VARCHAR(20) CHECK (movement_type IN ('Received', 'Shipped', 'Stored')),
+	quantity INT CHECK (quantity > 0),
+	movement_date DATETIME DEFAULT GETDATE()
+);
+
+SELECT * FROM Shipments;
+
+CREATE TABLE Supplierproducts (
+    supplier_productid INT IDENTITY PRIMARY KEY,
+    supplier_id INT FOREIGN KEY REFERENCES Suppliers(supplier_id),
+    product_id INT FOREIGN KEY REFERENCES Products(product_id)
+);
+
+-- This should fail because 'Platinum' is not in the allowed list ('Regular', 'Silver', 'Gold').
+INSERT INTO Customers (customer_name, phone_number, loyalty_status, Address)
+VALUES ('John Doe', '+91-3788901284', 'Platinum', '332- set st');  
+
+-- This should fail because productid and warehouseid should not be null
+INSERT INTO Inventories (product_id, warehouse_id, quantity_in_stock, product_category) VALUES
+(null, null, 100, 'Electronics');
+
+INSERT INTO Suppliers (supplier_name, region, phone_number, email) VALUES
+('ElectroWorld', 'Asia', '+91-1234567890', 'electro@world.com'),
+('FashionHub', 'Europe', '+44-9876543210', 'fashion@hub.com'),
+('TechGiant', 'North America', '+1-5551234567', 'tech@giant.com'),
+('HomeEssentials', 'Asia', '+91-9876543210', 'home@essentials.com'),
+('GadgetZone', 'Europe', '+44-1234567890', 'gadget@zone.com'),
+('StyleMakers', 'North America', '+1-5559876543', 'style@makers.com'),
+('ApplianceKing', 'Asia', '+91-5551234567', 'appliance@king.com'),
+('TrendyWear', 'Europe', '+44-5559876543', 'trendy@wear.com'),
+('SmartTech', 'North America', '+1-1234567890', 'smart@tech.com'),
+('UrbanFashion', 'Asia', '+91-5559876543', 'urban@fashion.com'),
+('GlobalGadgets', 'Europe', '+44-5551234567', 'global@gadgets.com'),
+('ClassicStyles', 'North America', '+1-9876543210', 'classic@styles.com'),
+('EcoFriendly', 'Asia', '+91-1234567890', 'eco@friendly.com'),
+('LuxuryLane', 'Europe', '+44-9876543210', 'luxury@lane.com'),
+('TechNest', 'North America', '+1-5551234567', 'tech@nest.com'),
+('FashionFiesta', 'Asia', '+91-9876543210', 'fashion@fiesta.com'),
+('HomeDecor', 'Europe', '+44-1234567890', 'home@decor.com'),
+('GadgetGalaxy', 'North America', '+1-5559876543', 'gadget@galaxy.com'),
+('StyleStudio', 'Asia', '+91-5551234567', 'style@studio.com'),
+('TechVibe', 'Europe', '+44-5559876543', 'tech@vibe.com');
+
+INSERT INTO Customers (customer_name, phone_number, loyalty_status, Address) VALUES
+('John Doe', '+1-1234567890', 'Gold', '123 Main St'),
+('Jane Smith', '+1-9876543210', 'Silver', '456 Elm St'),
+('Alice Johnson', '+1-5551234567', 'Bronze', '789 Oak St'),
+('Bob Brown', '+1-5559876543', 'Gold', '321 Pine St'),
+('Charlie Davis', '+1-1234567890', 'Silver', '654 Maple St'),
+('Eva Green', '+1-9876543210', 'Bronze', '987 Cedar St'),
+('Frank White', '+1-5551234567', 'Gold', '135 Birch St'),
+('Grace Black', '+1-5559876543', 'Silver', '246 Walnut St'),
+('Henry Blue', '+1-1234567890', 'Bronze', '369 Spruce St'),
+('Ivy Red', '+1-9876543210', 'Gold', '482 Cherry St'),
+('Jack Yellow', '+1-5551234567', 'Silver', '591 Peach St'),
+('Karen Pink', '+1-5559876543', 'Bronze', '624 Plum St'),
+('Leo Orange', '+1-1234567890', 'Gold', '753 Apple St'),
+('Mia Purple', '+1-9876543210', 'Silver', '864 Grape St'),
+('Noah Green', '+1-5551234567', 'Bronze', '975 Lemon St'),
+('Olivia Gray', '+1-5559876543', 'Gold', '108 Berry St'),
+('Paul Brown', '+1-1234567890', 'Silver', '219 Mango St'),
+('Quinn White', '+1-9876543210', 'Bronze', '330 Kiwi St'),
+('Ryan Black', '+1-5551234567', 'Gold', '441 Lime St'),
+('Sara Blue', '+1-5559876543', 'Silver', '552 Melon St');
+
+INSERT INTO Products (product_name, product_category, supplier_id, unit_price) VALUES
+('Smartphone X', 'Electronics', 1, 999.99),
+('Laptop Pro', 'Electronics', 3, 1499.99),
+('T-Shirt', 'Clothing', 2, 19.99),
+('Jeans', 'Clothing', 5, 49.99),
+('Blender', 'Home Appliances', 4, 79.99),
+('Microwave', 'Home Appliances', 7, 129.99),
+('Headphones', 'Electronics', 1, 199.99),
+('Sneakers', 'Clothing', 5, 89.99),
+('Toaster', 'Home Appliances', 4, 39.99),
+('Tablet', 'Electronics', 3, 499.99),
+('Jacket', 'Clothing', 2, 99.99),
+('Vacuum Cleaner', 'Home Appliances', 7, 199.99),
+('Smartwatch', 'Electronics', 1, 299.99),
+('Dress', 'Clothing', 5, 59.99),
+('Coffee Maker', 'Home Appliances', 4, 89.99),
+('Monitor', 'Electronics', 3, 299.99),
+('Hoodie', 'Clothing', 2, 39.99),
+('Air Fryer', 'Home Appliances', 7, 149.99),
+('Keyboard', 'Electronics', 1, 49.99),
+('Sweater', 'Clothing', 5, 69.99);
+
+INSERT INTO Orders (product_id, supplier_id, customer_id, order_date, status) VALUES
+(1, 1, 1, '2024-01-15', 'Completed'),
+(2, 3, 2, '2024-02-20', 'Shipped'),
+(3, 2, 3, '2024-03-10', 'Pending'),
+(4, 5, 4, '2024-01-25', 'Completed'),
+(5, 4, 5, '2024-02-05', 'Cancelled'),
+(6, 7, 6, '2024-03-15', 'Shipped'),
+(7, 1, 7, '2024-01-10', 'Completed'),
+(8, 5, 8, '2024-02-28', 'Pending'),
+(9, 4, 9, '2024-03-20', 'Completed'),
+(10, 3, 10, '2024-01-30', 'Shipped'),
+(11, 2, 11, '2024-02-10', 'Completed'),
+(12, 7, 12, '2024-03-25', 'Pending'),
+(13, 1, 13, '2024-01-05', 'Completed'),
+(14, 5, 14, '2024-02-15', 'Shipped'),
+(15, 4, 15, '2024-03-30', 'Completed'),
+(16, 3, 16, '2024-01-20', 'Pending'),
+(17, 2, 17, '2024-02-25', 'Completed'),
+(18, 7, 18, '2024-03-05', 'Shipped'),
+(19, 1, 19, '2024-01-12', 'Completed'),
+(20, 5, 20, '2024-02-18', 'Pending');
+
+INSERT INTO Orderdetails (order_id, product_id, quantity) VALUES
+(1, 1, 2),
+(2, 2, 1),
+(3, 3, 5),
+(4, 4, 3),
+(5, 5, 1),
+(6, 6, 2),
+(7, 7, 4),
+(8, 8, 2),
+(9, 9, 1),
+(10, 10, 3),
+(11, 11, 2),
+(12, 12, 1),
+(13, 13, 4),
+(14, 14, 2),
+(15, 15, 1),
+(16, 16, 3),
+(17, 17, 2),
+(18, 18, 1),
+(19, 19, 4),
+(20, 20, 2);
+
+INSERT INTO Warehouses (warehouse_name, location) VALUES
+('Warehouse A', 'New York'),
+('Warehouse B', 'London'),
+('Warehouse C', 'Tokyo'),
+('Warehouse D', 'Berlin'),
+('Warehouse E', 'Mumbai'),
+('Warehouse F', 'Paris'),
+('Warehouse G', 'Sydney'),
+('Warehouse H', 'Toronto'),
+('Warehouse I', 'Dubai'),
+('Warehouse J', 'Singapore'),
+('Warehouse K', 'Los Angeles'),
+('Warehouse L', 'Hong Kong'),
+('Warehouse M', 'Chicago'),
+('Warehouse N', 'Shanghai'),
+('Warehouse O', 'Seoul'),
+('Warehouse P', 'Moscow'),
+('Warehouse Q', 'San Francisco'),
+('Warehouse R', 'Beijing'),
+('Warehouse S', 'Osaka'),
+('Warehouse T', 'Melbourne');
+
+INSERT INTO Inventories (product_id, warehouse_id, quantity_in_stock, product_category) VALUES
+(1, 1, 100, 'Electronics'),
+(2, 2, 50, 'Electronics'),
+(3, 3, 200, 'Clothing'),
+(4, 4, 150, 'Clothing'),
+(5, 5, 75, 'Home Appliances'),
+(6, 6, 60, 'Home Appliances'),
+(7, 7, 90, 'Electronics'),
+(8, 8, 120, 'Clothing'),
+(9, 9, 80, 'Home Appliances'),
+(10, 10, 70, 'Electronics'),
+(11, 11, 110, 'Clothing'),
+(12, 12, 40, 'Home Appliances'),
+(13, 13, 95, 'Electronics'),
+(14, 14, 130, 'Clothing'),
+(15, 15, 55, 'Home Appliances'),
+(16, 16, 85, 'Electronics'),
+(17, 17, 140, 'Clothing'),
+(18, 18, 45, 'Home Appliances'),
+(19, 19, 65, 'Electronics'),
+(20, 20, 115, 'Clothing');
+
+INSERT INTO Shipments (supplier_id, warehouse_id, shipment_date, delivery_date, weight, status) VALUES
+(1, 1, '2024-01-01', '2024-01-10', 500, 'Received'),
+(2, 2, '2024-01-05', '2024-01-15', 300, 'Received'),
+(3, 3, '2024-01-10', '2024-01-20', 700, 'In Transit'),
+(4, 4, '2024-01-15', '2024-01-25', 400, 'Received'),
+(5, 5, '2024-01-20', '2024-01-30', 600, 'In Transit'),
+(6, 6, '2024-01-25', '2024-02-05', 800, 'Received'),
+(7, 7, '2024-01-30', '2024-02-10', 900, 'In Transit'),
+(8, 8, '2024-02-01', '2024-02-11', 200, 'Received'),
+(9, 9, '2024-02-05', '2024-02-15', 1000, 'In Transit'),
+(10, 10, '2024-02-10', '2024-02-20', 550, 'Received'),
+(11, 11, '2024-02-15', '2024-02-25', 750, 'In Transit'),
+(12, 12, '2024-02-20', '2024-03-01', 350, 'Received'),
+(13, 13, '2024-02-25', '2024-03-05', 950, 'In Transit'),
+(14, 14, '2024-03-01', '2024-03-11', 450, 'Received'),
+(15, 15, '2024-03-05', '2024-03-15', 650, 'In Transit'),
+(16, 16, '2024-03-10', '2024-03-20', 850, 'Received'),
+(17, 17, '2024-03-15', '2024-03-25', 150, 'In Transit'),
+(18, 18, '2024-03-20', '2024-03-30', 250, 'Received'),
+(19, 19, '2024-03-25', '2024-04-05', 1050, 'In Transit'),
+(20, 20, '2024-03-30', '2024-04-10', 500, 'Received');
+
+INSERT INTO Productsmovement (product_id, warehouse_id, shipment_id, movement_type, quantity, movement_date) VALUES
+(1, 1, 1, 'Received', 100, '2024-01-10'),
+(2, 2, 2, 'Received', 50, '2024-01-15'),
+(3, 3, 3, 'Shipped', 200, '2024-01-20'),
+(4, 4, 4, 'Received', 150, '2024-01-25'),
+(5, 5, 5, 'Shipped', 75, '2024-01-30'),
+(6, 6, 6, 'Received', 60, '2024-02-05'),
+(7, 7, 7, 'Shipped', 90, '2024-02-10'),
+(8, 8, 8, 'Received', 120, '2024-02-11'),
+(9, 9, 9, 'Shipped', 80, '2024-02-15'),
+(10, 10, 10, 'Received', 70, '2024-02-20'),
+(11, 11, 11, 'Shipped', 110, '2024-02-25'),
+(12, 12, 12, 'Received', 40, '2024-03-01'),
+(13, 13, 13, 'Shipped', 95, '2024-03-05'),
+(14, 14, 14, 'Received', 130, '2024-03-11'),
+(15, 15, 15, 'Shipped', 55, '2024-03-15'),
+(16, 16, 16, 'Received', 85, '2024-03-20'),
+(17, 17, 17, 'Shipped', 140, '2024-03-25'),
+(18, 18, 18, 'Received', 45, '2024-03-30'),
+(19, 19, 19, 'Shipped', 65, '2024-04-05'),
+(20, 20, 20, 'Received', 115, '2024-04-10');
+
+INSERT INTO SupplierProducts (supplier_id, product_id) VALUES
+(1, 1),  -- ElectroWorld supplies Smartphone X
+(1, 7),  -- ElectroWorld supplies Headphones
+(1, 13), -- ElectroWorld supplies Smartwatch
+(1, 19), -- ElectroWorld supplies Keyboard
+(2, 3),  -- FashionHub supplies T-Shirt
+(2, 11), -- FashionHub supplies Jacket
+(2, 17), -- FashionHub supplies Hoodie
+(3, 2),  -- TechGiant supplies Laptop Pro
+(3, 10), -- TechGiant supplies Tablet
+(3, 16), -- TechGiant supplies Monitor
+(4, 5),  -- HomeEssentials supplies Blender
+(4, 9),  -- HomeEssentials supplies Toaster
+(4, 15), -- HomeEssentials supplies Coffee Maker
+(5, 4),  -- GadgetZone supplies Jeans
+(5, 8),  -- GadgetZone supplies Sneakers
+(5, 14), -- GadgetZone supplies Dress
+(5, 20), -- GadgetZone supplies Sweater
+(6, 6),  -- StyleMakers supplies Microwave
+(6, 12), -- StyleMakers supplies Vacuum Cleaner
+(6, 18); -- StyleMakers supplies Air Fryer
+
+-- Selecting Data:
+-- 1.Retrieve the product IDs and names of all products in the inventory.
+
+SELECT i.product_id, p.product_name
+FROM Inventories AS i 
+JOIN Products AS p ON p.product_id = i.product_id;
+
+-- 2. Get the order IDs and corresponding customer names for all completed orders.
+SELECT o.order_id, c.customer_name 
+FROM Orders AS o 
+JOIN Customers AS c
+ON o.customer_id = c.customer_id
+WHERE status = 'Completed';
+
+-- 3. Fetch the supplier names and contact information for suppliers supplying 'Electronics' products.
+SELECT DISTINCT s.supplier_name, s.phone_number, s.email
+FROM Suppliers AS s
+JOIN Supplierproducts AS sp 
+ON s.supplier_id = sp.supplier_id
+JOIN Products AS p
+ON sp.product_id = p.product_id
+WHERE p.product_category = 'Electronics';
+
+-- 4. Retrieve the product IDs and quantities for products with stock levels below 50 units.
+SELECT product_id, quantity_in_stock
+FROM Inventories
+WHERE quantity_in_stock < 50;
+
+--5. Get the shipment IDs and delivery dates for all received shipments.
+SELECT shipment_id, delivery_date
+FROM Shipments
+WHERE status = 'Received';
+
+/* Filtering (Complex WHERE Clauses): 
+6. Retrieve the order IDs and customer names for orders placed between January 1, 2024, 
+and March 31, 2024, with a total order value exceeding $1000.*/
+SELECT o.order_id, c.customer_name, (od.quantity * p.unit_price) AS Total_Value
+FROM Orders AS o
+JOIN Customers AS c
+ON o.customer_id = c.customer_id
+JOIN Orderdetails AS od
+ON od.product_id = o.product_id
+JOIN Products AS p
+ON od.product_id = p.product_id
+WHERE o.order_date BETWEEN '2024-01-01' AND '2024-01-31' AND (od.quantity * p.unit_price) > 1000;
+
+--7. Get the product IDs and names for products with stock levels below 20 units and belonging to the 'Electronics' category.
+SELECT i.product_id, p.product_name
+FROM Inventories AS i
+JOIN Products AS p 
+ON i.product_id = p.product_id
+WHERE quantity_in_stock < 20 AND p.product_category = 'Electronics';
+
+--8. Fetch the supplier names and contact information for suppliers located in 'Asia' and supplying 'Clothing' products.
+SELECT supplier_name, phone_number, email
+FROM Suppliers AS s
+JOIN Supplierproducts AS sp
+ON s.supplier_id = sp.supplier_id
+JOIN Products AS p
+ON p.supplier_id = s.supplier_id
+WHERE p.product_category = 'Clothing' AND s.region = 'Asia' ;
+
+
+--9. Retrieve the product IDs and quantities for products received in shipments with a weight exceeding 1000 kg.
+SELECT pm.product_id, pm.quantity
+FROM Productsmovement AS pm 
+JOIN Shipments AS sh
+ON pm.shipment_id = sh.shipment_id
+WHERE weight > 1000 AND pm.movement_type = 'Shipped';
+
+/*10. Get the order IDs and customer names for orders with a total order value exceeding $500 
+placed by customers with a loyalty status of 'Gold'.*/
+SELECT o.order_id, c.customer_name, (od.quantity * p.unit_price) AS Total_order_Value
+FROM Orders AS o
+JOIN Customers AS c
+ON o.customer_id = c.customer_id
+JOIN Orderdetails AS od 
+ON od.product_id = o.product_id
+JOIN Products AS p
+ON p.product_id = od.product_id
+WHERE c.loyalty_status = 'Gold' AND (od.quantity * p.unit_price) > 500;
+
+
+/* Sorting:
+11. Retrieve the shipment IDs and delivery dates for all received shipments, sorted in ascending order of delivery dates.*/
+SELECT shipment_id, delivery_date
+FROM Shipments
+WHERE status = 'Received'
+ORDER BY delivery_date;
+
+--12. Get the product IDs and names of all products in the inventory, sorted alphabetically by product names.
+SELECT i.product_id, p.product_name  
+FROM Inventories AS i
+JOIN Products AS p
+ON i.product_id = p.product_id
+ORDER BY p.product_name ASC;
+
+--13. Fetch the supplier names and contact information for all suppliers, sorted alphabetically by supplier names.
+SELECT supplier_name, phone_number, email 
+FROM Suppliers
+ORDER BY supplier_name ASC;
+
+--14. Retrieve the order IDs and corresponding customer names for completed orders, sorted alphabetically by customer names.
+SELECT o.order_id, c.customer_name
+FROM Orders AS o
+JOIN Customers AS c
+ON o.customer_id = c.customer_id
+WHERE o.status = 'Completed'
+ORDER BY c.customer_name ASC;
+
+--15. Get the product IDs and quantities for products with stock levels below 50 units, sorted in descending order of quantities.
+SELECT product_id, quantity_in_stock AS quantities
+FROM Inventories
+WHERE quantity_in_stock < 50
+ORDER BY quantities DESC;
+
+
+/* Distinct:
+16. Retrieve distinct product categories available in the inventory.*/
+SELECT DISTINCT product_category AS Product_Categories
+FROM Inventories;
+
+--17. Get distinct order IDs for all placed orders.
+SELECT DISTINCT order_id
+FROM Orders;
+
+--18. Fetch distinct supplier names for all suppliers.
+SELECT DISTINCT supplier_name AS Supllier_Names
+FROM Suppliers;
+
+--19. Retrieve distinct shipment IDs for all received shipments.
+SELECT DISTINCT shipment_id
+FROM Shipments
+WHERE status = 'Received';
+
+--20. Get distinct customer names for customers who have placed orders.
+SELECT DISTINCT c.customer_name, o.order_id
+FROM Customers AS c
+JOIN Orders AS o
+ON c.customer_id = o.customer_id;
