@@ -1,2 +1,2 @@
-# SCM-Database-Design-and-Implementation-Report
+# SCM-Database-Design-and-Implementation
 Supply Chain Management database design, implementation process, and testing strategy
